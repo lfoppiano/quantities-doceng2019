@@ -1,5 +1,7 @@
 %%%% Proceedings format for most of ACM conferences (with the exceptions listed below) and all ICPS volumes.
 \documentclass[sigconf]{acmart}
+
+% \usepackage{amsmath}
 %%%% As of March 2017, [siggraph] is no longer used. Please use sigconf (above) for SIGGRAPH conferences.
 
 %%%% Proceedings format for SIGPLAN conferences 
@@ -170,18 +172,158 @@ At the National Institute for Materials Science (NIMS), a project for applicatio
 \maketitle
 
 \section{Introduction}
+
+The data overflow in scientific publications is a widely known challenge impacting the accessibility to relevant information for both researchers and readers. Moreover, the amount of data a single scientists might be dealing with, risk of becoming overwhelming because understanding requires to spend many hours (re-)reading a single article to grasp its message and significance. In knowledge acquisition it's simply too much for a single human to keep up with the new fresh information that are available daily. 
+Luckily technology has evolved: advances in natural language processing (NLP) in combination with Deep Neural Network have reached results above average human precision. 
+
+%Motivation
+When observing the content produced in scientific literature, it's emerging that many technical fields deliver key information in the form of figures and quantitative information. While figures requires particular processing, quantitative information can be decoded with special approaches in order to obtain highly valuable structured information. Physical quantities are also relatively central information, shared among several domains. In an attempt to model such concept, we can consider measurements as composed by a quantified amount referring to an (optional) unit and measured object or substance (optional as well). 
+There are, though, several challenges that are posed: (1) the variability of expressions is still "polluted" by the variability introduced by natural language, together with the writing style of the single author. (2) the standardisation cover only part of the expression that are used (for example length can be expressed as m, meter, metre). Lastly and more critical are the overlap (3) between different unit of measurements (such as pico Henry \textit{pH} and acidity to make an example). The ability extract and label measurements correctly, enable the creation of knowledge bases as ignition phase to foster text and data mining processes aiming to creating advanced semantic services. 
+
+%Grobid-quantities
+In this paper we present Grobid-quantity, an Open Source application \cite{grobid-quantities} for parsing and normalising measurements from scientific and patent literature. Using the machine learning (ML) CRF (Conditional Random Field) algorithm provides a framework for extracting quantities (atomic values, ranges, intervals and lists), units (like length, weight) and different value representations (such as alphanumeric, power of 10, exponential). Identified measurements are then normalised or transformed to the International System of Units (SI). Thanks to its high recall and reliable precision, Grobid-quantities has been integrated as a measurement-extraction engine in various TDM projects \cite{foppiano2019proposal}.
+
+The article is organised as follow. In Section \ref{sec:related_work} we discuss other system for measurement extraction and normalisation. After, in section \ref{sec:system} we describe how the system work, the uses cases where it has been used (Section \ref{sec:use_cases}). In Section \ref{sec:conclusion} we conclude the paper and discuss prospects and future work. 
+
 \section{Related Work}
-\section{Discover Quantities}
+\label{sec:related_work}
+Previous attempts have been made to extract such data automatically from text, several of them related to patent literature. The majority relay on rule-based or formal grammar, combining handwritten rules with lookups on dictionaries of terms.  
+
+% The most recent work of evaluation is provided by \cite{hundman2017measurement} which provides a rather detailed comparison of Grobid-quantities to other systems. 
+A known commercial tool, Quantalyze, which, probably due to rule-based approach, tests resulted weak recall \cite{hundman2017measurement} covering a rather lower set of units \cite{aras2014applications}. Another tentative approach using GATE (General Architecture for Text Engineering) is described in \cite{agatonovic2008large} addressed in a sub-task for identifying numeric properties from patents. \cite{am2013processing} investigates issues applied to Russian-derived languages. These approaches lack either the generalisation to an extensive corpus or deal mainly with the specific languages. \cite{berrahou2013extract} described an attempt using machine learning algorithm in combination with pattern matching and distance measurement against an ontology to extract units. \cite{kang_extracting_2013} describe another ML-based approach focusing on experimental results restricted to biological domain, on which quantification of units is just a part of it. 
+Our work recognise not only units but also quantitative values in various forms (atomic, list, ranges and intervals). Recognised entities are parsed and normalised to the International System of Units (SI). We have an additional module for recognising the quantified object or substance which, however, will be discussed in a following article.
+
+\section{System description}
+\label{sec:system}
+
+In this section we describe how the system has been designed, we begin illustrating the data model used to carry out our representation of the problem. Further section explain the machine learning architecture, which models are created and how they are used. This section is then concluded with a detailed description of the normalisation process.
+
+\subsection{Data model}
+\label{subsub:data-model}
+Before discussing in detail the functioning of the system, we delineate the abstract model of the measurement and physical quantities can be represented. 
+The "entry point" is the concept of \textit{Measurement} composed by a \textit{type} and one or more \textit{quantities}. We have identified three type of measurements: (a) atomic, in case of a punctual measurement (10 grams). (b) interval (\textit{from 3 to 5 mmol}) and (c) range ($100 \pm 4$), when the quantification covers a continuous range of values. Finally, (d) conjunction representing discrete value of the same quantity. 
+
+A quantity is the association between a value and an (optional) unit. See in Figure~\ref{fig:data-model-schema-2}, since we cover also enumeration, it's possible not to have a unit. Finally \textit{Value} and \textit{Unit} are expected to appear as \textit{raw}, when they are represented as appearing in text, \textit{parsed} when the numeric values are recognised or converted as such and finally, normalised which consists in finding the SI base unit by transforming (when in the same System) or computed (when from another system, for example from imperial miles to meters). 
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{images/schema-2}
+  \caption{Data model schema}
+  \label{fig:data-model-schema-2}
+  \Description{Data model schema}
+\end{figure}
+
+The idea behind this design, since the data we are dealing is noisy (spaces, wrong UTF-8 characters, missing fonts), is to provide a representation that allows to complete the process of extraction even with partial results.
+
+We have designed \textit{Units} and \textit{Values} in order to support multiple representations. Values can be of five types: numeric (2, 1000), alphanumeric (two, thousand), power of 10 ($3\cdot10\textsuperscript{5}$) and exponential representation using the mathematical constant e = 2.2718 ($0.2\cdot e\textsuperscript{3}$), finally dates are also expressions of measurements of time. 
+
+\textit{Units} are more complex to manage. In case of non-SI units, often but not always, be converted to their SI equivalent (like for example converting miles to meters). In case of SI units can be represented as products of units, for example m/s can be rewritten as $m \cdot s\textsuperscript{-1}$. Unit products are cleaner and can be easily normalised to their base unit.  
+
+\subsection{Architecture}
+
+Grobid-quantity architecture is composed by two phases: (a) extraction and parsing and (b) normalisation. As mentioned previously, the process has been designed to carry on until the end, and, in case of errors or mistakes, return partial data. For example if a number cannot be parsed, because of a invalid character, the parsed value will be null, and the client, once noticed that, can apply additional processing on the raw data. 
+
+
+\subsubsection{Extraction}
+The extraction is composed by three CRF (Conditional Random Field) models applied in cascade according to the schema in Figure \ref{fig:schema-cascade}: Quantities, Units and Values models. 
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{images/schema-cascade}
+  \caption{Illustrate the cascade approach in applying CRF models. The input is first parsed by the quantities model, which recognise the type of measurement (list, ranges, interval and atomic values) and units. They are then passed to further CRF sub-models: in this case Value and Unit respectively.}
+  \label{fig:schema-cascade}
+  \Description{Illustrate the cascade approach in applying CRF models. The input is first parsed by the quantities model, which recognise the type of measurement (list, ranges, interval and atomic values) and units. They are then passed to further CRF sub-models: in this case Value and Unit respectively.}
+\end{figure}
+
+% Quantity model 
+
+The \textit{quantities model} takes in input a raw text and apply text labelling using the six labels as illustrated in Table \ref{tab:quantities-model-labels}. This model is responsible to identify units and values and group them together. Because of that and  output from sequence labelling is flatten out, there is need of additional labels (such as two unit labels <unitLeft>, <unitRight>). 
+
+\begin{table}
+  \caption{Labels description for the CRF model for Quantities. In bold the token the label refers to.}
+  \label{tab:quantities-model-labels}
+  \begin{tabular}{lll}
+    \toprule
+    Label & Description & Example\\
+    \midrule
+    <valueAtomic> & value of an atomic quantity & \textbf{2} m \\
+    <valueLeast> & least value in an interval & from \textbf{2} m \\
+    <valueMost> & max value in an interval & up to \textbf{7} m \\
+    <valueBase> & base value in a range & $\textbf{20}\pm7$ m \\
+    <valueRange> & range value in a range & $20 \pm \textbf{7}$ m \\
+    <valueList> & list of quantities & \textbf{2}, \textbf{3} and \textbf{10} m \\
+    <unitLeft> & left-attached unit & \textbf{pH} 2 \\
+    <unitRight> & right-attached unit & 2 \textbf{m} \\
+    <other> & everything else & - \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+The quantity model works at token level, where each token is generated by splitting the input by almost any kind of punctuation and space. Numeric expressions such as 2.5 m are also split in ["2",".","5"," ","m"]. The model uses only standard lexical features, it does not use layout information such as formatting, subscript or superscript. 
+To improve the recognition we provide the model two additional features result of the lookup on two gazetteers: list of units and their representation such as notations (m), lemmas (meter or metre) and inflections (meters, metres). The second gazetteer is a generated list of alphabetic values (twenty-one, etc.). These gazetteers are in English, French and German. 
+
+% Unit model 
+The unit model is applied to every token identified as unit. This model works at character level and is applied to every entities recognised as Unit from the Quantity model. They are segmented in product of triples (prefix, base, power) as they are modelled in the SI system (Table \ref{tab:units-model-labels}). This approach is very convenient to parse complex units. For example Kg/mm\textsuperscript{2} can be rewritten as [(K, g, 1),(m, m, -2)]. This model is compatible with unit outside SI, for example for an imperial unit like \textit{mile} can be recognised entirely as a single product of a base, like [(,mile,)].
+
+\begin{table}
+  \caption{Labels description for the CRF model for Units. }
+  \label{tab:units-model-labels}
+  \begin{tabular}{lll}
+    \toprule
+    Label & Description & Example\\
+    \midrule
+    <prefix> & prefix of the unit  & \textbf{k}g\textsuperscript{2} \\
+    <base> & least value in the quantity & k\textbf{g}\textsuperscript{2}\\
+    <pow> & max value in the quantity & kg\textsuperscript{\textbf{2}}\\
+    <other> & everything else & - \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+Once the units are segmented, we reformat them and perform a lookup in our unit gazetteer to retrieve all complementary information, like system, type. For example, suppose the text contains "10 m 3". The Quantity model identify 10 as atomic value and "m 3" as unit. The Unit model identify "m" as base and "3" as power, the unit is then reformatted as "m\^2" and looked up in the gazetteer. Since "m\^3" represent a complex unit "Cubic meters" is found and information like type /textit{volume} and system SI Base are attached to to the unit. 
+
+% Value model 
+The value model processes the values recognised by the Quantities model in five type of expressions: numeric, alphabetic, power-10, exponential, and time expression using the labels defined in Table \ref{tab:values-model-labels}). This model is crucial to support multiple value expression used in natural language and apply the correct parser: alphabetic expression are looked up on a word-number converter, power-10 and exponential are parsed and the total is calculated. Time expression are processed using the built-in Date model from Grobid \cite{GROBID}.
+
+\begin{table}
+  \caption{Labels description for the CRF model for Values. In bold an example of token the specific label recognise.}
+  \label{tab:values-model-labels}
+  \begin{tabular}{lll}
+    \toprule
+    Label & Description & Example\\
+    \midrule
+    <number> & numeric value & $\textbf{2.5}\cdot10\textsuperscript{\textbf{5}}$ \\
+    <alpha> & alphabetic value & \textbf{twenty} \\
+    <time> & time expression  & in \textbf{1970-01-02}\\
+    <exp> & exponential expression & $0.2\cdot\textbf{e}\textsuperscript{3}$ \\
+    <base> & base of the power expression & $2.5\cdot\textbf{10}\textsuperscript{5}$\\
+    <pow> & power in a power expression & $2.5\cdot10\textsuperscript{\textbf{5}}$ \\
+    <other> & everything else & - \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Normalisation}
+
+The normalisation is the last step of this process. All the measurement that have been parsed correctly are then eligible for normalisation. To perform this task we have selected an external library called Unit of Measurement. Units of Measurement provides a set of APIs and services for handling units and quantities; developed in Java as the succession of the JMeasurement library has been standardised 
+
+
+\subsubsection{Service}
 \section{Use cases}
+\label{sec:use_cases}
+\subsection{ISTEX}
+\subsection{NIMS}
+\subsection{Marve}
 \section{Conclusion}
+\label{sec:conclusion}
 
 %%
-%% The acknowledgments section is defined using the "acks" environment
+%% The acknowledgements section is defined using the "acks" environment
 %% (and NOT an unnumbered section). This ensures the proper
 %% identification of the section in the article metadata, and the
 %% consistent spelling of the heading.
 \begin{acks}
-Patrice Lopez
+We would like to address our warmest thanks to Patrice Lopez, who initially started developing Grobid-quantities. Patrice is also the author of Grobid~\cite{GROBID} (GeneRation Of BIbliographic Data), \textit{entity-fishing} and many other TDM tools for scientific literature. 
 \end{acks}
 
 %%
