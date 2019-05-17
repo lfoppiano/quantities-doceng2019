@@ -1,11 +1,11 @@
 %%%% Proceedings format for most of ACM conferences (with the exceptions listed below) and all ICPS volumes.
-\documentclass[sigconf]{acmart}
+% \documentclass[sigconf]{acmart}
 
 % \usepackage{amsmath}
 %%%% As of March 2017, [siggraph] is no longer used. Please use sigconf (above) for SIGGRAPH conferences.
 
 %%%% Proceedings format for SIGPLAN conferences 
-% \documentclass[sigplan, anonymous, review]{acmart}
+\documentclass[sigplan, anonymous, review]{acmart}
 
 %%%% Proceedings format for SIGCHI conferences
 % \documentclass[sigchi, review]{acmart}
@@ -127,7 +127,7 @@
 %% article.
 \begin{abstract}
 We present Grobid-quantities, an open source application for parsing and normalising measurements from scientific and patent literature~\cite{grobid-quantities}. Tools of this kind represent the building blocks for large-scale Text and Data Mining (TDM) systems whose goal is to understand and make unstructured information accessible through standardised methods. 
-Grobid-quantities is a module built up on top of Grobid~\cite{GROBID}, a machine learning framework for parsing and structuring PDF documents. Designed to process large quantities of data, it provides a robust implementation in batch mode or via a REST API. The machine learning engine architecture follows the cascade approach where each model is specialised in the resolution of a specific task. The models are trained using a CRF (Conditional Random Field) algorithm for extracting quantities (atomic values, intervals or lists), units (such as length, weight, etc.) and different value representations (such as alphanumeric, power of 10, exponential). Identified measurements are then normalised according to the International System of Units (SI)~\cite{internationalSystemOfUnits}. 
+Grobid-quantities is a module built up on top of Grobid~\cite{GROBID}, a machine learning framework for parsing and structuring PDF documents. Designed to process large quantities of data, it provides a robust implementation in batch mode or via a REST API. The machine learning engine architecture follows the cascade approach, where each model is specialised in the resolution of a specific task. The models are trained using a CRF (Conditional Random Field) algorithm for extracting quantities (atomic values, intervals or lists), units (such as length, weight) and different value representations (such as alphanumeric, power of 10, exponential). Identified measurements are normalised according to the International System of Units (SI)~\cite{internationalSystemOfUnits}. 
 Thanks to its consistent recall and reliable precision, Grobid-quantities has been integrated as a measurement-extraction engine in various TDM projects, such as Marve (Measurement Context Extraction from Text)~\cite{hundman2017measurement}, for extracting semantic measurements and meaning in Earth Science. At the National Institute for Materials Science (NIMS), a project for application of Grobid-quantities to discover new superconducting materials is in progress: normalised materials characteristics extracted from scientific literature are a key resource for materials informatics (MI)~\cite{foppiano2019proposal}. 
 \end{abstract}
 
@@ -172,26 +172,25 @@ Thanks to its consistent recall and reliable precision, Grobid-quantities has be
 \section{Introduction}
 
 The data overflow in scientific publications is a widely known challenge impacting the accessibility to relevant information for both researchers and readers. 
-%The amount of data that a single scientists might be dealing with tend to be overwhelming because understanding requires to spend many hours (re-)reading a single article to grasp its message and significance. It's simply too much for a single human to keep up with the new fresh information that are available daily. 
+%The amount of data that a single scientist might be dealing with tend to be overwhelming because understanding requires to spend many hours (re-)reading a single article to grasp its message and significance. It's simply too much for a single human to keep up with the new fresh information that is available daily. 
 %Luckily technology has evolved: advances in natural language processing (NLP) in combination with Deep Neural Network have reached results above average human precision. 
 %Motivation
-Observing the actual content expressed in scientific literature shows that many technical fields deliver key information in the form of figures and quantitative information. Quantitative information, like physical quantities are valuable information to quickly understand the subject, shared among several domains. There are several challenges to overcome in order to gain access to such knowledge automatically: (1) natural language and writing style can introduce additional variability (for example length can be expressed as m, meter, metre). Overlaps (2) between different unit of measurements (for example inductance \textit{pico Henry} and acidity have the same notation \textit{pH}). The ability extract and label measurements correctly, enables the creation of knowledge bases as ignition phase to foster text and data mining processes aiming to creating advanced semantic services. 
+One of the core elements of science is the physical quantity or measurement, which combine quantification of units (such as grams or micrometers). The automatic extraction of measurements has been studied for many years. Nowadays, despite the technology has evolved, there are still several challenges to overcome: (1) natural language and writing style introduce additional variability (for example length can be expressed as m, meter, metre). Overlaps (2) between different unit of measurements (like inductance \textit{pico Henry} and acidity share the same notation \textit{pH}). The ability correctly create new knowledge bases from physical measurements can foster the creation of advanced search services. 
 
 %Grobid-quantities
-In this paper we present Grobid-quantity, an Open Source application \cite{grobid-quantities} for parsing and normalising measurements from scientific and patent literature. Using the machine learning (ML) CRF (Conditional Random Field) algorithm, it provides a framework for extracting quantities (atomic values, ranges, intervals and lists), units (like length, weight) and different value representations (such as alphanumeric, power of 10, exponential). Identified measurements are then normalised or transformed to the International System of Units (SI). Thanks to its high recall and reliable precision, Grobid-quantities has been integrated as a measurement-extraction engine in various TDM projects \cite{foppiano2019proposal}.
+In this paper, we present Grobid-quantity, an Open Source application \cite{grobid-quantities} for parsing and normalising measurements from scientific and patent literature. Using the machine learning (ML) CRF (Conditional Random Field) algorithm, it provides a framework for extracting quantities (atomic values, ranges, intervals and lists), units (like length, weight) and different value representations (such as alphanumeric, power of 10, exponential). Identified measurements are then normalised or transformed toward the International System of Units (SI). Thanks to its high recall and reliable precision, Grobid-quantities has been integrated as a measurement-extraction engine in various TDM projects \cite{foppiano2019proposal}.
 
-The article is organised as follow. In Section \ref{sec:related_work} we discuss other system for measurement extraction and normalisation. After, in section \ref{sec:system} we describe how the system work, the uses cases where it has been used (Section \ref{sec:use_cases}). In Section \ref{sec:conclusion} we conclude the paper and discuss prospects and future work. 
+This article is organised as follow. In Section \ref{sec:related_work} we discuss the related work. Then, we describe the system in Section \ref{sec:system} and we provide the evaluation and use cases in Sections \ref{sec:results} and  \ref{sec:use_cases}. Finally, we conclude the article in Section \ref{sec:conclusion}.
 
 \section{Related Work}
 \label{sec:related_work}
-Previous attempts have been made to extract such data automatically from text, several of them related to patent literature. The majority rely on rule-based systems or formal grammars, combining handwritten rules with look-ups in terminological databases.  
+Previous attempts to extract measurements from text have been made previously. Often rely on rule-based systems or formal grammars, combining handwritten rules with look-ups in terminological databases.  
 
-% The most recent work of evaluation is provided by \cite{hundman2017measurement} which provides a rather detailed comparison of Grobid-quantities to other systems. 
-A known commercial tool, Quantalyze, which, probably due to rule-based approach, tests resulted weak recall \cite{hundman2017measurement} covering a rather lower set of units \cite{aras2014applications}. Another tentative approach using GATE (General Architecture for Text Engineering) is described in \cite{agatonovic2008large} addressed in a sub-task for identifying numeric properties from patents. \cite{am2013processing} investigates issues applied to Russian-derived languages. These approaches lack either the generalisation to an extensive corpus or deal mainly with the specific languages. \cite{berrahou2013extract} described an attempt using machine learning algorithm in combination with pattern matching and distance measurement against an ontology to extract units. \cite{kang_extracting_2013} describe another ML-based approach focusing on experimental results restricted to biological domain, on which quantification of units is just a part of it. Our work recognise units and various type of quantitative values and normalise them to the International System of Units (SI). 
+Quantalyze, a commercial tool, was reported by  \cite{hundman2017measurement} showing weak recall and covering a subset of units \cite{aras2014applications}. Another experimental approach using GATE (General Architecture for Text Engineering), described in \cite{agatonovic2008large}, addressed the identification of numeric properties from patents. \cite{am2013processing} investigated issues applied to Russian-derived languages. These approaches lack either the generalisation to an extensive corpus or deal mainly with a specific languages. \cite{berrahou2013extract} described an attempt to recognise units using machine learning in combination with pattern matching and string distance to an ontology. \cite{kang_extracting_2013} describe another ML-based approach focusing on experimental results restricted to biological domain. Our work differs because it recognises units and various type of quantitative values. Our extraction is fully ML-based and includes a normalisation process toward the International System of Units (SI). 
 
 \section{System description}
 \label{sec:system}
-Grobid-quantities is a Java application, based on Grobid framework (GeneRation Of BIbliographic Data)~\cite{GROBID}. Using the low-level Grobid abstract model can structuring and manipulating natively PDFs. It supports large-scale via batch processing or web REST API. Moreover it provides a visualisation module to populate extracted measurements on PDF on-the-fly.
+Grobid-quantities is a Java application, based on Grobid framework (GeneRation Of BIbliographic Data)~\cite{GROBID}. Using the low-level Grobid abstraction can structure and manipulate PDFs natively. It supports large-scale processing via batch or web REST API. The front-end provides a visualisation module to show extracted measurements on PDF.
 
 \subsection{Data model}
 \label{subsub:data-model}
@@ -202,13 +201,16 @@ Grobid-quantities is a Java application, based on Grobid framework (GeneRation O
   \label{fig:data-model-schema-2}
   \Description{Data model schema}
 \end{figure}
-We define \textit{Measurement} the association of an object or a substance with one or more \textit{quantities}, depending on a \textit{type}. (a) atomic, in case of a punctual measurement (10 grams). (b) interval (\textit{from 3 to 5 mmol}) and (c) range ($100 \pm 4$), when the quantification covers a continuous range of values. Finally, (d) list of discrete values of the same quantity. A \textit{Quantity} link a  quantitative value and an (optional) unit (Figure~\ref{fig:data-model-schema-2}). The \textit{Value} and \textit{Unit} entities can exists in three forms: \textit{raw} as appear in text, \textit{parsed} when they are converted to the logical representation and finally \textit{normalised} to the SI base unit. Especially when processing PDFs, we deal with noisy data (spaces, wrong UTF-8 characters, missing fonts), this model is designed to support partial results, like unparsed values. The \textit{Value} entity supports five types: numeric (2, 1000), alphanumeric (two, thousand), power of 10 ($3\cdot10\textsuperscript{5}$) and exponential representation using the mathematical constant e = 2.2718 ($0.2\cdot e\textsuperscript{3}$), dates are also expressions of measurements of time. \textit{Unit} objects are more complex to manage because of the multiple measurement systems. For simplicity we modelled it following the SI which allows representing units as products of simpler compounds: writing m/s is equivalent to $m \cdot s\textsuperscript{-1}$.
+We define \textit{Measurement} the association of an object or a substance with one or more \textit{quantities}, depending on a \textit{type}. (a) atomic, in case of a punctual measurement (10 grams). (b) interval (\textit{from 3 to 5 mmol}) and (c) range ($100 \pm 4$), when the quantification covers continuous values. Finally, (d) list of discrete values of the same quantity. A \textit{Quantity} link a  quantitative value and an (optional) unit (Figure~\ref{fig:data-model-schema-2}). 
+When dealing with text extracted from PDFs there is a relevant amount of noise that needs to be handled (spaces, wrong UTF-8 characters, missing fonts). Therefore, we designed this model to allow return of partial results: the \textit{Value} and \textit{Unit} entities allows three different representation fo the same information: \textit{raw} as appear in text, \textit{parsed} when they are converted to the logical (number) representation and finally \textit{normalised} when they are converted to the equivalent base unit in the SI system. 
+
+Values can be of five types: numeric (2, 1000), alphanumeric (two, thousand), power of 10 ($3\cdot10\textsuperscript{5}$) and exponential representation using the mathematical constant e = 2.2718 ($0.2\cdot e\textsuperscript{3}$), dates are also expressions of measurements of time. Units objects are more complex to manage because of several measurement systems. For simplicity we modelled them following the SI system which allows representing units as products of simpler compounds: we trained ML models to transform m/s to their product representation $m \cdot s\textsuperscript{-1}$.
 
 \subsection{Architecture}
-The system can be divided into two steps: (a) extraction and parsing and (b) normalisation. 
+The system takes in input text or PDF and performs three steps: (a) tokenisation, (b) measurement extraction and parsing and (c) quantity normalisation. 
 
 \subsubsection{Tokenisation}
-The tokenisation is the process of splitting input data in token. While Grobid generally splits each token using punctuation, Grobid-quantities uses a more fine grained tokenisation. For example a numeric expression such as 2.5 m is tokenised to ["2",".","5"," ","m"]. 
+The tokenisation is the process of splitting input data in tokens. Grobid-quantities uses a two-phase tokenisation, first by punctuation, then each resulting token is re-tokenised using a regex aiming to separate sequential digits and alphanumeric characters. Given the example 25m\^2, first passage returns ["25m","\^","2"] and the second ["25","m","\^","2"]. 
 
 \subsubsection{Extraction}
 The extraction is composed by three CRF (Conditional Random Field) models applied in cascade: \textit{Quantities}, \textit{Units} and \textit{Values} (Figure \ref{fig:schema-cascade}). 
@@ -222,7 +224,7 @@ The extraction is composed by three CRF (Conditional Random Field) models applie
 \end{figure}
 
 % Quantity model 
-The \textit{quantities model} takes in input a sequence of text (from text or PDF) and  identify units, values \ref{tab:quantities-model-labels} and link them together. The process requires additional labels defining positional information (such as <unitLeft>, <unitRight> for units) because of the lack of structure in sequence labelling output. 
+The \textit{Quantities} CRF model takes in input a sequence tokens identify quantities as combination of units and values \ref{tab:quantities-model-labels}. The process requires additional labels defining positional information (such as <unitLeft>, <unitRight> for units) because of the lack of structure in sequence labelling output. 
 
 \begin{table}[ht]
   \caption{Labels description for the CRF model for Quantities. In bold the token the label refers to.}
@@ -244,33 +246,33 @@ The \textit{quantities model} takes in input a sequence of text (from text or PD
 \end{tabular}
 \end{table}
 
-We performed feature engineering using standard lexical information and orthogonal features obtained by two gazetteers. Layout information (such as formatting, subscript or superscript) are ignored.
-
 % Gazetteers
-Previous works (Section \ref{sec:related_work}) made wide use of gazetteers (database, ontology) to improve performances. We compiled a list of units (localised in English, French and German) with their main characteristics: system (SI base, SI derived, imperial, ...) and type (volume, length, ...). And their representations: notations (m\textsuperscript{3}, m\^3), lemmas (cubic meter, cubic metre) and inflections (cubic meters, cubic metres).  This list was loaded into the \textit{Unit lexicon} providing units look-ups by properties (notation, lemma, inflection, etc.). A second gazetteer was created to allow transformation of alphabetic values (twenty-one, etc.) in numeric ones (21, ...). 
+Previous works (described in Section \ref{sec:related_work}) made extensive use of gazetteers (database, ontology) to improve performances. We compiled a list of units (localised in English, French and German) with their main characteristics: system (SI base, SI derived, imperial, ...) and type (volume, length, ...). Their representations: notations (m\textsuperscript{3}, m\^3), lemmas (cubic meter, cubic metre) and inflections (cubic meters, cubic metres).  We made this list available through the \textit{Unit lexicon} by providing units lookups by properties (notation, lemma, inflexion, and so forth). A second gazetteer was created to allow the transformation of alphabetic values in numeric ones (for example, twenty-one to 21).
+
+The \textit{Quantities} CRF model uses standard lexical information and orthogonal features obtained by the \textit{Unit lexicon}, indicating  whether a token is a known unit. Layout information (such as formatting, subscript or superscript) are not used. The resulting units and values are processed in cascade by the respective models. 
 
 % Unit model 
-The \textit{Units} model is applied to any identified Unit entity from the \textit{Quantities} model. This CRF model works at character level. The output is a list of product of triples (prefix, base, power) (Table \ref{tab:units-model-labels}). For example Kg/mm\textsuperscript{2} can be transformed as [(K, g, 1), (m, m, -2)]. Units outside the SI (e.g. miles) are conventionally transformed in a single product with only the base element ([(,mile,)]). Features generated from the \textit{Unit lexicon} are used in this model. 
+The \textit{Units} CRF model works at character level and uses the \textit{Unit lexicon} for orthogonal features. It parses a unit in a list of product of triples (prefix, base, power) (Table \ref{tab:units-model-labels}). For example Kg/mm\textsuperscript{2} can be transformed as [(K, g, 1), (m, m, -2)]. Units outside the SI (e.g. miles) are transformed in a single product with only the "base" element ([(,mile,)]). 
 
 \begin{table}[ht]
-  \caption{Labels description for the CRF model for Units. }
+  \caption{Labels description for the CRF model for Units. The example shows in bold the part referred by the label. }
   \label{tab:units-model-labels}
   \begin{tabular}{lll}
     \toprule
     Label & Description & Example\\
     \midrule
     <prefix> & prefix of the unit  & \textbf{k}g\textsuperscript{2} \\
-    <base> & least value in the quantity & k\textbf{g}\textsuperscript{2}\\
-    <pow> & max value in the quantity & kg\textsuperscript{\textbf{2}}\\
+    <base> & unit base & k\textbf{g}\textsuperscript{2}\\
+    <pow> & unit power & kg\textsuperscript{\textbf{2}}\\
     <other> & everything else & - \\
   \bottomrule
 \end{tabular}
 \end{table}
 
-We use the product of tripes to create well-formatted units we lookup in our unit gazetteer to retrieve complementary information (system, type). Let's suppose the text contains "10 m 3". The Quantity model identify 10 as atomic value and "m 3" as unit. The Unit model identify "m" as base and "3" as power: [(,m,3)]. This product is then reformatted as "m\^3" and looked up in the gazetteer. Since "m\^3" exists, system=SI, inflection='Cubic meters' and type=volume  are attached to the unit. 
+We use the products of triples to create well-formatted units and use them to fetch complementary information (system, type) from the \textit{Unit lexicon}. Let's suppose the raw text contains "10 m 3". The Quantity model identifies 10 as atomic value and "m 3" as the unit. The Unit model identifies "m" as the base and "3" as power: [(,m,3)]. This product is then reformatted as "m\^3" and looked up in the gazetteer. Since "m\^3" exists, system=SI, inflection='Cubic meters' and type=volume are attached to the unit object. 
 
 % Value model 
-The \textit{Values} model processes any identified values in five types: numeric, alphabetic, power-10, exponential, and time expression (Table \ref{tab:values-model-labels}). This model allows to support natural language expressions, thus selecting the correct parser: alphabetic expression are looked up on a word-number converter, power-10 and exponential are calculated. Time expression are processed using the built-in Date model from Grobid \cite{GROBID}.
+The \textit{Values} model processes any identified values. It supports five types: numeric, alphabetic, power-10, exponential, and time expression (Table \ref{tab:values-model-labels}). Each type is parsed in a different way: alphabetic expressions are looked up in the word-to-number gazetteer, power-10 and exponential are calculated mathematically. Time expressions are processed using the built-in Date model from Grobid \cite{GROBID}.
 
 \begin{table}[ht]
   \caption{Labels description for the CRF model for Values. In bold an example of token the specific label recognise.}
@@ -292,14 +294,12 @@ The \textit{Values} model processes any identified values in five types: numeric
 
 \subsubsection{Normalisation}
 
-The normalisation is the final step of the chain where all the measurement with a valid parsed value. We reuse an external Java library called Units of Measurement which provides a set interfaces and implementations for handling units and quantities in a safe way. Dealing with measurement transformation lead often to common mistakes due to mathematical calculation or precision approximations. At the time this paper is being written, Units of Measurement specification has been finalised under the Java Standardisation Process JSR-385\footnote{\url{https://jcp.org/en/jsr/results?id=6096}}. This library is developed by experts in both units of measurements and java development. 
-Since the normalisation process may fail, we attach only valid results to their respective objects (See Figure \ref{fig:data-model-schema-2}). Invalid normalisation errors will be ignored and the process continues until the end. 
-
+The normalisation is the final step of the chain where all the measurement with a valid parsed value are transformed to the base SI unit (grams to kg, Celsius to Kelvin, and so on). Since the normalisation process may fail for multiple reasons, errors are reported but ignored for the sake of the processing. We use an external Java library called Units of Measurement~\cite{units_of_measurement} which provides a set of interfaces and implementations for safely handling units and quantities. Dealing with measurement transformation lead often to common mistakes due rounding and wrong approximations. At the time this paper is being written, the final revised version of this library is accepted under the Java Standardisation Process JSR-385\footnote{\url{https://jcp.org/en/jsr/results?id=6096}}. 
 
 \section{Evaluation and results}
+\label{sec:results}
 
-The system has been trained and evaluated using a corpus of 32 randomly selected Open Access (OA) English articles covering different domains such as medicine, robotics, astronomy, physiology. We have included also three patents translated in English, French and German. The training data was annotated by 3 annotators and finalised after being cross-checked. 
-The corpus was split following the 80/20 proportion for training/evaluation. After training, we estimated precision, recall and F1-score for the model using the evaluation framework built-in in Grobid. These measure indices are calculated at three different levels: token-level, field-level and instance-level. Consider a sequence of tokens having assigned and expected labels. While token-level scores are calculated independently for each token, field-level scores are calculated for each continuous sequence of tokens under the same label (so a field, a sequence of several tokens which all belongs to the same labelled chunk, e.g. a value), finally instance level is the score for the whole input, for instance a paragraph~\cite{foppiano2019proposal}. 
+We trained and evaluated the system using a corpus of 32 randomly selected Open Access (OA) English articles from different domains such as medicine, robotics, astronomy, physiology. We have also included three patents translated in English, French and German. Three people annotated the corpus and each document was cross-checked. We partition training and evaluation data using 80/20 proportion. After training, we estimated precision, recall and F1-score for each model, using the evaluation framework built-in in Grobid. These measure indices are calculated at three different levels: token-level, field-level and instance-level. Consider a sequence of tokens with their predicted and expected labels. While token-level scores are calculated independently for each token, field-level scores are calculated for each continuous sequence of tokens under the same label (so a field, a sequence of several tokens which all belong to the same labelled chunk, e.g. an unit), finally instance level is the score for the whole input, for instance a paragraph~\cite{foppiano2019proposal}. 
 
 \begin{table}[ht]
    \caption{Quantities CRF model evaluation results (precision, recall and F1-score).}
@@ -309,21 +309,21 @@ The corpus was split following the 80/20 proportion for training/evaluation. Aft
        Label & \multicolumn{3}{c}{\textbf{Token-level}} & \multicolumn{3}{c}{\textbf{Field-level}}\\
         & P & R & F1 & P & R & F1 \\
        \midrule
-       <unitLeft>    & 97.91 & 92.99 & 95.52 & 96.74 & 93.69 & 95.19\\
-       <unitRight>   & 87.1  & 70.59 & 84.38 & 85.19 & 82.14 & 83.64\\
-       <valueAtomic> & 84.39 & 83.75 & 84.74 & 86.08 & 82.62 & 84.32\\
-       <valueBase>   & 100   & 100   & 98.95 & 96    & 96    & 96   \\
-       <valueLeast>  & 88.7  & 78    & 85.31 & 87.22 & 79.45 & 83.15\\
-       <valueList>   & 80.56 & 20.13 & 65.54 & 77.78 & 50    & 60.87\\
-       <valueMost>   & 80    & 76.25 & 79.3  & 79.86 & 79.31 & 79.58\\
-       <valueRange>  & 100   & 96.43 & 98.82 & 100   & 96    & 97.96\\
+       <unitLeft>    & 98.94 & 95.23 & 97.05 & 97.8  & 95.11 & 96.43\\
+       <unitRight>   & 66.67 & 66.67 & 66.67 & 59.09 & 54.17 & 56.52\\
+       <valueAtomic> & 86.63 & 87.81 & 87.22 & 87.39 & 87.17 & 87.28\\
+       <valueBase>   & 95.12 & 100   & 97.5  & 94.12 & 94.12 & 94.12\\
+       <valueLeast>  & 82.81 & 65.43 & 73.1  & 81.89 & 67.1  & 73.76\\
+       <valueList>   & 77.69 & 56.63 & 65.51 & 76.06 & 58.06 & 65.85\\
+       <valueMost>   & 78.05 & 73.44 & 75.68 & 81.68 & 64.46 & 72.05\\
+       <valueRange>  & 96.67 & 100   & 98.31 & 94.44 & 94.44 & 94.44\\
        \midrule
-       average       & 88.56  & 84.94 & \textbf{86.71} & 89.45 & 84.41 & \textbf{86.86}\\
+       average       & 88.81  & 85.08 & \textbf{86.9} & 89.59 & 84.6 & \textbf{87.02}\\
        \bottomrule
    \end{tabular}
 \end{table}
 
-As shown in Tables \ref{tab:quantities-evaluation} we obtain average F1-score of 86.71\% and 86.86\% for token and field-level respectively. The low results for \textit{<valueLists>} and \textit{<unitRight>} suggests that more examples of that kind are required. Lower expression variability can explain high f1-score for \textit{<valueRange>} as compared with \textit{<valueAtomic>} or \textit{<valueLeast>}. The recall at instance level is 68.49\%, indicating that more than half of the evaluated paragraphs returned 100\% correct measurements. 
+As shown in Tables \ref{tab:quantities-evaluation} we obtain average F1-score of 86.9\% and 87.01\% for token and field-level respectively. The low results for \textit{<valueLists>} and \textit{<unitRight>} suggests that more examples of that kind are required. Simple pattern structure and lower expression variability can explain the high f1-score for \textit{<valueRange>} as compared with \textit{<valueAtomic>} or \textit{<valueLeast>}. The recall at instance level is 68.49\%, indicating that more than half of the evaluated paragraphs contained no errors. 
 
 \begin{table}[ht]
     \caption{Units CRF model evaluation results (precision, recall and F1-score).}
@@ -342,7 +342,7 @@ As shown in Tables \ref{tab:quantities-evaluation} we obtain average F1-score of
    \end{tabular}
 \end{table}
 
-Table \ref{tab:units-evaluation} shows that \textit{Units} CRF models f1-score is 91.49\% and 79.72\% for token and instance level respectively. Analysing the result by label, we notice the model tend to score lower for \textit{<prefix>}. Intuitively this can be due to overlap with \textit{<base>}. At instance level the recall is 85.06\%. 
+Table \ref{tab:units-evaluation} shows that \textit{Units} CRF models f1-score is 91.49\% and 79.72\% for token and instance level respectively. We notice the model tend to have lower results for \textit{<prefix>} label; intuitively this can be due to overlaps with \textit{<base>}. The instance-level recall is consistently high at 85.06\%. 
 
 \begin{table}[ht]
   \caption{Values CRF model evaluation results (precision, recall and F1-score).}
@@ -363,21 +363,18 @@ Table \ref{tab:units-evaluation} shows that \textit{Units} CRF models f1-score i
      \end{tabular}
 \end{table}
 
-Finally \ref{tab:values-evaluation} indicate Value CRF model average f1-score of 91.4\% and 86.47\% respectively. Recall at instance-level is 90.23\%. Results evaluation of Value CRF model suggests a good amount of training data has been reached.
+Finally \ref{tab:values-evaluation} indicate Values CRF model average f1-score of 91.4\% and 86.47\% for token and field level respectively. Low precision for \textit{<base>} can be explained caused by overlaps with other labels, as for the  \textit{Units} model. Recall at instance-level is 90.23\%.  
 
-Thanks to these results, Grobid-quantities provided prospects to be employed in larger system for automatic Text and Data Mining. 
+Thanks to these results, Grobid-quantities provided prospects to be employed in more extensive system for automatic Text and Data Mining. 
 
 \section{Use cases}
 \label{sec:use_cases}
-Grobid-quantities has been integrated as a measurement-extraction engine: \cite{hundman2017measurement} employed it in Marve (Measurement Context Extraction from Text) for extracting semantic measurements and meaning in Earth Science. 
-In the scope of the ISTEX project, ...
-
-At the National Institute for Materials Science (NIMS), a project to discover new superconducting materials is in progress. The system being developed relay on Grobid-quantities for extracting normalised materials characteristics.  like critical temperature (Tc) or critical pressure from scientific literature ~\cite{foppiano2019proposal}. 
+\cite{hundman2017measurement} described a system for extracting semantic measurements and meaning in Earth Science, Marve (Measurement Context Extraction from Text), using Grobid-quantities in combination with their approach based on dependency parsing. The ISTEX~\cite{dazy2014istex} project financed a pilot project to evaluate the applicability of extracted measurement to a enhanced information retrieval system, where document can be found by measurement search. At the National Institute for Materials Science (NIMS), a project to discover new superconducting materials is in progress. The system being developed relay on Grobid-quantities for extracting normalised materials characteristics,like critical temperature (Tc) or critical pressure, from scientific literature ~\cite{foppiano2019proposal}. 
 
 % Istex, Marve, NIMS
 \section{Conclusion}
 \label{sec:conclusion}
-In this paper, we presented Grobid-quantities, an generic system for extracting and normalising measurement from scientific literature. Scientific results are encouraging, although more training data are still required, especially for \textit{Quantities} recognition. The integration of Grobid-quantities in other projects suggest maturity from the engineering point if view. In the next step, we plan to introduce deep neural networks like Bi-LSTM+CRF approach and embeddings \cite{delft}. 
+In this paper, we presented Grobid-quantities, a system for extracting and normalising measurement from scientific literature. Results are encouraging so that the system can be used, although there is still needs to have more training data, in particular for the \textit{Quantities} CRF model. The integration of Grobid-quantities in other projects suggests maturity from the engineering point of view. In the next steps, we plan to introduce deep neural networks like Bi-LSTM+CRF approach and embeddings as replacement to the statistical CRF models. 
 
 %%
 %% The acknowledgements section is defined using the "acks" environment
@@ -385,8 +382,7 @@ In this paper, we presented Grobid-quantities, an generic system for extracting 
 %% identification of the section in the article metadata, and the
 %% consistent spelling of the heading.
 \begin{acks}
-We would like to address our warmest thanks to Patrice Lopez, who started Grobid-quantities. Patrice is also the author of Grobid~\cite{GROBID} and many other Open Source TDM tools for scientific literature. 
-We would like also to thanks our colleagues at NIMS Thaer M. Dieb and Akira Suzuki for the support received in carry out the work to develop the TDM system for extracting automatically superconductor material information.
+Our warmest thanks to Patrice Lopez, who initiated and supported Grobid-quantities, author of Grobid~\cite{GROBID} and many other Open Source TDM tools. Thanks our colleagues at NIMS Thaer M. Dieb, and Akira Suzuki for the support received. Finally, thanks to Units of Measurements's contributors\footnote{https://github.com/orgs/unitsofmeasurement/people}.
 \end{acks}
 
 %%
