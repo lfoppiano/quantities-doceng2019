@@ -1,11 +1,11 @@
 %%%% Proceedings format for most of ACM conferences (with the exceptions listed below) and all ICPS volumes.
-% \documentclass[sigconf]{acmart}
+\documentclass[sigconf]{acmart}
 
 % \usepackage{amsmath}
 %%%% As of March 2017, [siggraph] is no longer used. Please use sigconf (above) for SIGGRAPH conferences.
 
 %%%% Proceedings format for SIGPLAN conferences 
-\documentclass[sigplan, anonymous, review]{acmart}
+% \documentclass[sigplan, anonymous, review]{acmart}
 
 %%%% Proceedings format for SIGCHI conferences
 % \documentclass[sigchi, review]{acmart}
@@ -369,7 +369,7 @@ Thanks to these results, Grobid-quantities provided prospects to be employed in 
 
 \section{Use cases}
 \label{sec:use_cases}
-\cite{hundman2017measurement} described a system for extracting semantic measurements and meaning in Earth Science, Marve (Measurement Context Extraction from Text), using Grobid-quantities in combination with their approach based on dependency parsing. The ISTEX~\cite{dazy2014istex} project financed a pilot project to evaluate the applicability of extracted measurement to a enhanced information retrieval system, where document can be found by measurement search. At the National Institute for Materials Science (NIMS), a project to discover new superconducting materials is in progress. The system being developed relay on Grobid-quantities for extracting normalised materials characteristics,like critical temperature (Tc) or critical pressure, from scientific literature ~\cite{foppiano2019proposal}. 
+\cite{hundman2017measurement} described a system for extracting semantic measurements and meaning in Earth Science, Marve (Measurement Context Extraction from Text), using Grobid-quantities in combination with their approach based on dependency parsing. The ISTEX~\cite{dazy2014istex} project financed a pilot project to evaluate the applicability of extracted measurement to a enhanced information retrieval system, where document can be found by measurement search. Recently, the normalised data extraction is strongly required in materials research, because an inverse problem in which high performance materials are predicted from properties is expected to be solved with well-organised big data. At the National Institute for Materials Science (NIMS), a project to discover new superconducting materials is in progress. The system being developed relays on Grobid-quantities which can extract and normalise superconducting properties such as critical temperature (Tc) with units of mK and K and critical pressure expressed with units of Pa, MPa, and GPa in scientific literature ~\cite{foppiano2019proposal}. 
 
 % Istex, Marve, NIMS
 \section{Conclusion}
