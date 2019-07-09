@@ -127,7 +127,7 @@
 %% article.
 \begin{abstract}
 We present Grobid-quantities, an open source application for extracting and normalising measurements from scientific and patent literature~\cite{grobid-quantities}. Tools of this kind, aiming to understand and make unstructured information accessible, represent the building blocks for large-scale Text and Data Mining (TDM) systems. 
-Grobid-quantities is a module built on top of Grobid~\cite{GROBID}, a machine learning framework for parsing and structuring PDF documents. Designed to process large quantities of data, it provides a robust implementation accessible in batch mode or via a REST API. The machine learning engine architecture follows the cascade approach, where each model is specialised in the resolution of a specific task. The models are trained using CRF (Conditional Random Field) algorithm for extracting quantities (atomic values, intervals and lists), units (such as length, weight) and different value representations (such as alphanumeric, power of 10). Identified measurements are normalised according to the International System of Units (SI) \cite{internationalSystemOfUnits}. 
+Grobid-quantities is a module built on top of Grobid~\cite{GROBID}, a machine learning framework for parsing and structuring PDF documents. Designed to process large quantities of data, it provides a robust implementation accessible in batch mode or via a REST API. The machine learning engine architecture follows the cascade approach, where each model is specialised in the resolution of a specific task. The models are trained using CRF (Conditional Random Field) algorithm for extracting quantities (atomic values, intervals and lists), units (such as length, weight) and different value representations (numeric, alphabetic or scientific notation). Identified measurements are normalised according to the International System of Units (SI). 
 Thanks to its stable recall and reliable precision, Grobid-quantities has been integrated as the measurement-extraction engine in various TDM projects, such as Marve (Measurement Context Extraction from Text), for extracting semantic measurements and meaning in Earth Science\cite{hundman2017measurement}. At the National Institute for Materials Science in Japan (NIMS), it is used in an ongoing project to discover new superconducting materials. Normalised materials characteristics (such as critical temperature, pressure) extracted from scientific literature are a key resource for materials informatics (MI) \cite{foppiano2019proposal}. 
 \end{abstract}
 
@@ -202,8 +202,8 @@ Grobid-quantities is a Java application, based on Grobid (GeneRation Of BIbliogr
   \Description{Data model schema}
 \end{figure}
 
-The data model (Figure \ref{fig:data-model-schema-2}) lay its foundation on the concept of \textit{Measurement}, which links an object or a substance with one or more \textit{quantities}. We defined four \textit{Measurements} types: (a) atomic, in case of a single measurement (e.g., 10 grams). (b) interval (\textit{from 3 to 5 km}) and (c) range ($100 \pm 4$ mm) for continuous values, and, (d) a list of discrete values. A \textit{Quantity} links the quantitative value and the unit (Figure~\ref{fig:data-model-schema-2}). 
-Since data extracted from PDFs unavoidably present irregular tokens from wrong UTF-8 encoding or missing fonts, we designed this model to allow partial results. The \textit{Value} and \textit{Unit} entities allow three different representations: \textit{Raw} as appear in input, \textit{Parsed} unifies the value into the numerical expression, and the unit with their properties (system, type). Finally, \textit{Normalised} contains the transformed unit and values to the SI system \cite{internationalSystemOfUnits}. \textit{Value} object supports five types of representations: numeric (2, 1000), alphanumeric (two, thousand), power of 10 ($3\cdot10\textsuperscript{5}$) and exponential representation using the mathematical constant e = 2.2718 ($0.2\cdot e\textsuperscript{3}$), and time, which is also expression of measurements. Units objects follow the International System (SI), which allows representing units as products of simpler compounds (e.g. m/s to $m \cdot s\textsuperscript{-1}$) further decomposed as triples (prefix, base and power).
+The data model (Figure \ref{fig:data-model-schema-2}) lay its foundation on the concept of \textit{Measurement}, which links an object or a substance with one or more \textit{quantities}. We defined four \textit{Measurements} types: (a) atomic, in case of a single measurement (e.g., 10 grams). (b) interval (\textit{from 3 to 5 km}) and (c) range ($100 \pm 4$ mm) for continuous values, and, (d) a list of discrete values. A \textit{Quantity} links the quantitative value and the unit (Figure~\ref{fig:data-model-schema-2}). At this stage we do not support probability distribution of ranges and intervals. 
+Since data extracted from PDFs unavoidably present irregular tokens from wrong UTF-8 encoding or missing fonts, we designed this model to allow partial results. The \textit{Value} and \textit{Unit} entities allow three different representations: \textit{Raw} as appear in input, \textit{Parsed} unifies the value into the numerical expression, and the unit with their properties (system, type). Finally, \textit{Normalised} contains the transformed unit and values to the SI system. \textit{Value} object supports five types of representations: numeric (2, 1000), alphabetic (two, thousand), scientific notation ($3\cdot10\textsuperscript{5}$), and time, which is also expression of measurements. Units objects are organised following the SI, which allows representing units as products of simpler compounds (e.g. m/s to $m \cdot s\textsuperscript{-1}$) further decomposed as triples (prefix, base and power).
 
 \subsection{Architecture}
 The system takes in input text or PDF and performs three steps: (a) tokenisation, (b) measurement extraction and parsing and (c) quantity normalisation. The details of each step are summarised as follows.
@@ -272,7 +272,7 @@ The \textit{Units} CRF model works at character level and uses the \textit{Unit 
 We then use the structured triples to fetch the corresponding (system, type) information from the \textit{Unit Lexicon} and attach them to the resulting object. 
 %Let's suppose the raw text contains "10 m 3". The Quantity model identifies 10 as atomic value and "m 3" as the unit. The Unit model identifies "m" as the base and "3" as power: [(,m,3)]. This product is then reformatted as "m\^3" and looked up in the gazetteer. Since "m\^3" exists, system=SI, inflection='Cubic meters' and type=volume are attached to the unit object. 
 % Value model 
-In parallel, the CRF \textit{Values} model unifies the format of identified values into numerical formats. It supports five types: numeric, alphabetic, power-10, exponential, and time expression (see Table \ref{tab:values-model-labels}). Each type is treated with different parsers, namely alphabetic expressions are looked up in the word-to-number gazetteer, power-10 and exponential are calculated mathematically. Time expressions are processed using the built-in Date Grobid model \cite{GROBID}.
+In parallel, the CRF \textit{Values} model unifies the format of identified values into numerical formats. It supports four types: numeric, alphabetic, scientific notation, and time expression (see Table \ref{tab:values-model-labels}). Each type is treated with different parsers, namely alphabetic expressions are looked up in the word-to-number gazetteer, scientific notations are parsed and calculated mathematically. Time expressions are processed using the built-in Date Grobid model \cite{GROBID}.
 
 \begin{table}[ht]
   \caption{Labels description for the CRF model for Values. In bold an example of tokens for the specific label recognise.}
@@ -284,9 +284,8 @@ In parallel, the CRF \textit{Values} model unifies the format of identified valu
     <number> & numeric value & $\textbf{2.5}\cdot10\textsuperscript{\textbf{5}}$ \\
     <alpha> & alphabetic value & \textbf{twenty} \\
     <time> & time expression  & in \textbf{1970-01-02}\\
-    <exp> & exponential expression & $0.2\cdot\textbf{e}\textsuperscript{3}$ \\
-    <base> & base of the power expression & $2.5\cdot\textbf{10}\textsuperscript{5}$\\
-    <pow> & power in a power expression & $2.5\cdot10\textsuperscript{\textbf{5}}$ \\
+    <base> & coefficient in scientific notation & $2.5\cdot\textbf{10}\textsuperscript{5}$\\
+    <pow> & exponent in scientific notation & $2.5\cdot10\textsuperscript{\textbf{5}}$ \\
     <other> & everything else & - \\
   \bottomrule
 \end{tabular}
@@ -295,6 +294,8 @@ In parallel, the CRF \textit{Values} model unifies the format of identified valu
 \subsubsection{Normalisation}
 
 The measurements extracted are transformed to the base SI unit (grams to kg, Celsius to Kelvin, and so on). We used an external Java library called Units of Measurement~\cite{units_of_measurement} which provides a set of standard interfaces and implementations for safely handling units and quantities. Manipulating measurements with transformations often lead to common mistakes due to wrong rounding and approximations. At the time this paper is being written, the final revised version of this library has been accepted under the Java Standardisation Process JSR-385\footnote{\url{https://jcp.org/en/jsr/results?id=6096}}. 
+At the moment we do not exploit any contextual information related to the paper domain to resolve ambiguous units.  
+
 
 \section{Evaluation and results}
 \label{sec:results}
@@ -373,7 +374,7 @@ Recently, the normalised data extraction is strongly required in materials resea
 % Istex, Marve, NIMS
 \section{Conclusion}
 \label{sec:conclusion}
-In this paper, we presented Grobid-quantities, a system for extracting and normalising measurement from scientific and patent literature. Results are promising and the integration in real applications proved a certain level of maturity. There is still the need to have more training data, in particular for the \textit{Quantities} and \textit{Units} CRF model and possibly covering more sub-domains of Materials Science. In the next steps, we plan to introduce deep neural networks like Bi-LSTM+CRF approach and embeddings as a replacement for the statistical CRF models. 
+In this paper, we presented Grobid-quantities, a system for extracting and normalising measurement from scientific and patent literature. Results are promising, and the integration in real applications proved a consolidated level of maturity. There is still the need to have more training data, in particular for the \textit{Quantities} and \textit{Units} CRF models, respectively. We need to include more Materials Science documents. In the future, we plan to improve the extraction by introducing embeddings and recurrent neural networks, like Bi-LSTM+CRF as a replacement for the statistical CRF models. Contextualisation of paper (such as topics and domains) will provide useful discriminant for unit resolution. 
 
 %%
 %% The acknowledgements section is defined using the "acks" environment
