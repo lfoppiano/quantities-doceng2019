@@ -127,7 +127,7 @@
 %% article.
 \begin{abstract}
 We present Grobid-quantities, an open source application for extracting and normalising measurements from scientific and patent literature~\cite{grobid-quantities}. Tools of this kind, aiming to understand and make unstructured information accessible, represent the building blocks for large-scale Text and Data Mining (TDM) systems. 
-Grobid-quantities is a module built on top of Grobid~\cite{GROBID}, a machine learning framework for parsing and structuring PDF documents. Designed to process large quantities of data, it provides a robust implementation accessible in batch mode or via a REST API. The machine learning engine architecture follows the cascade approach, where each model is specialised in the resolution of a specific task. The models are trained using CRF (Conditional Random Field) algorithm for extracting quantities (atomic values, intervals and lists), units (such as length, weight) and different value representations (such as alphanumeric, power of 10). Identified measurements are normalised according to the International System of Units (SI). 
+Grobid-quantities is a module built on top of Grobid~\cite{GROBID}, a machine learning framework for parsing and structuring PDF documents. Designed to process large quantities of data, it provides a robust implementation accessible in batch mode or via a REST API. The machine learning engine architecture follows the cascade approach, where each model is specialised in the resolution of a specific task. The models are trained using CRF (Conditional Random Field) algorithm for extracting quantities (atomic values, intervals and lists), units (such as length, weight) and different value representations (such as alphanumeric, power of 10). Identified measurements are normalised according to the International System of Units (SI) \cite{internationalSystemOfUnits}. 
 Thanks to its stable recall and reliable precision, Grobid-quantities has been integrated as the measurement-extraction engine in various TDM projects, such as Marve (Measurement Context Extraction from Text), for extracting semantic measurements and meaning in Earth Science\cite{hundman2017measurement}. At the National Institute for Materials Science in Japan (NIMS), it is used in an ongoing project to discover new superconducting materials. Normalised materials characteristics (such as critical temperature, pressure) extracted from scientific literature are a key resource for materials informatics (MI) \cite{foppiano2019proposal}. 
 \end{abstract}
 
@@ -261,15 +261,15 @@ The \textit{Units} CRF model works at character level and uses the \textit{Unit 
     \toprule
     Label & Description & Example\\
     \midrule
-    <prefix> & prefix of the unit  & \textbf{k}g\textsuperscript{2} \\
-    <base> & unit base & k\textbf{g}\textsuperscript{2}\\
-    <pow> & unit power & kg\textsuperscript{\textbf{2}}\\
+    <prefix> & prefix of the unit  & \textbf{k}m\textsuperscript{2} \\
+    <base> & unit base & k\textbf{m}\textsuperscript{2}\\
+    <pow> & unit power & km\textsuperscript{\textbf{2}}\\
     <other> & everything else & - \\
   \bottomrule
 \end{tabular}
 \end{table}
 
-We then use the structured triples to fetch complementary information (system, type) from the \textit{Unit Lexicon} and attach them to the resulting object. 
+We then use the structured triples to fetch the corresponding (system, type) information from the \textit{Unit Lexicon} and attach them to the resulting object. 
 %Let's suppose the raw text contains "10 m 3". The Quantity model identifies 10 as atomic value and "m 3" as the unit. The Unit model identifies "m" as the base and "3" as power: [(,m,3)]. This product is then reformatted as "m\^3" and looked up in the gazetteer. Since "m\^3" exists, system=SI, inflection='Cubic meters' and type=volume are attached to the unit object. 
 % Value model 
 In parallel, the CRF \textit{Values} model unifies the format of identified values into numerical formats. It supports five types: numeric, alphabetic, power-10, exponential, and time expression (see Table \ref{tab:values-model-labels}). Each type is treated with different parsers, namely alphabetic expressions are looked up in the word-to-number gazetteer, power-10 and exponential are calculated mathematically. Time expressions are processed using the built-in Date Grobid model \cite{GROBID}.
@@ -299,7 +299,7 @@ The measurements extracted are transformed to the base SI unit (grams to kg, Cel
 \section{Evaluation and results}
 \label{sec:results}
 
-We trained and evaluated our system using a corpus of 32 Open Access (OA) English articles retrieved from different domains such as medicine, robotics, astronomy, and physiology. The corpus contains additionally three patents translated in English, French and German. Three people annotated the corpus, and each document was cross-checked. We partitioned training and evaluation data using 80/20 proportion. We estimated precision, recall and F1-score for each model, using the evaluation framework built-in in Grobid. These measure indices are calculated at three different levels: token-level, field-level and instance-level. Given a sequence of tokens with their predicted and expected labels. While token-level scores are calculated independently for each token, field-level scores are calculated for each continuous sequence of tokens under the same label (a sequence of several tokens which all belong to the same labelled chunk, e.g. a unit), finally instance-level is the aggregated score of fields in the whole paragraph~\cite{foppiano2019proposal}. 
+We trained and evaluated our system using a corpus of 32 Open Access (OA) English articles retrieved from different domains such as medicine, robotics, astronomy, and physiology. The corpus contains additionally three patents translated in English, French and German. Three people annotated the corpus, and each document was cross-checked. We partitioned training and evaluation data using 80/20 proportion. We estimated precision, recall and F1-score for each model, using the evaluation framework built-in in Grobid. These measure indices are calculated at three different levels: token-level, field-level and instance-level. Given a fragment with their predicted and expected labels. While token-level scores are calculated independently for each token, field-level scores are calculated for each continuous sequence of tokens under the same label (a sequence of several tokens which all belong to the same labelled chunk, e.g. a unit), finally instance-level is the aggregated score of fields in the whole paragraph~\cite{foppiano2019proposal}. 
 
 \begin{table}[ht]
    \caption{Evaluation scores for \textit{Quantities} CRF model (precision, recall and F1-score).}
@@ -368,7 +368,7 @@ Finally, Table \ref{tab:values-evaluation} indicate that \textit{Values} CRF mod
 
 \section{Applications}
 \label{sec:use_cases}
-Recently, the normalised data extraction is strongly required in materials research, because an inverse problem in which high-performance materials are predicted from properties is expected to be solved with well-organised big data. At the National Institute for Materials Science (NIMS), a project to discover new superconducting materials from scientific literature is in progress. The system being developed relays on Grobid-quantities to extract and normalise superconducting properties, such as critical temperature (Tc) with units of mK and K and critical pressure expressed with units of Pa, MPa, and GPa \cite{foppiano2019proposal}. Grobid-quantities was showcased also in a TDM prototype (within the scope of the French national-wide ISTEX~\cite{dazy2014istex} project) where it provided measurement annotations used to prototype a quantities-based semantic search\footnote{The demo can be accessed at \url{https://traces1.inria.fr/istex_sample/}}. Finally, another use was made in a system for extracting semantic measurements and meaning in Earth Science, Marve~\cite{hundman2017measurement}.  
+Recently, the normalised data extraction is strongly required in materials research, because an inverse problem in which high-performance materials are predicted from properties is expected to be solved with well-organised big data. At the National Institute for Materials Science (NIMS), a project to discover new superconducting materials from scientific literature is in progress. The system being developed relies on Grobid-quantities to extract and normalise superconducting properties, such as critical temperature (Tc) with units of mK and K and critical pressure expressed with units of Pa, MPa, and GPa \cite{foppiano2019proposal}. Grobid-quantities was showcased also in a TDM prototype (within the scope of the French national-wide ISTEX~\cite{dazy2014istex} project) where it provided measurement annotations used to prototype a quantities-based semantic search\footnote{The demo can be accessed at \url{https://traces1.inria.fr/istex_sample/}}. Finally, another use was made in a system for extracting semantic measurements and meaning in Earth Science, Marve~\cite{hundman2017measurement}.  
 
 % Istex, Marve, NIMS
 \section{Conclusion}
