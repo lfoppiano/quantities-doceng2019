@@ -187,14 +187,14 @@ This article is organised as follow. In Section \ref{sec:related_work} we introd
 
 \section{Related Work}
 \label{sec:related_work}
-Attempts to extract measurements from text have been made using rule-based (formal grammars engines, look-ups in terminological databases) and ML approaches. A known commercial tool, Quantalyze\footnote{https://www.quantalyze.com/}, was reported by \cite{hundman2017measurement} showing weak recall and supporting only a limited subset of units \cite{aras2014applications}. Another approach \cite{agatonovic2008large}, using GATE (General Architecture for Text Engineering), addressed the identification of numeric properties from patents. \cite{am2013processing} investigated issues applied to Russian-derived languages. These approaches lack either the generalisation to an extensive corpus or deal mainly with specific languages. \cite{berrahou2013extract} described an attempt to recognise units by looking up terms from an ontology, using ML in combination with pattern matching and string metrics. Other ML-based approaches exist, although limited to specific domains: \cite{kang_extracting_2013} and \cite{dieb2015framework} describe measurements extraction from experimental results in biology and nanocrystal device development, respectively. Our work is not restricted to a specific domain or subset of measurements and includes a normalisation process. 
+Attempts to extract measurements from text have been made using rule-based (formal grammars engines, lookups in terminological databases) and ML approaches. A known commercial tool, Quantalyze\footnote{https://www.quantalyze.com/}, was reported by \cite{hundman2017measurement} showing weak recall and supporting only a limited subset of units \cite{aras2014applications}. Another approach \cite{agatonovic2008large}, using GATE (General Architecture for Text Engineering), addressed the identification of numeric properties from patents. \cite{am2013processing} investigated issues applied to Russian-derived languages. These approaches lack either the generalisation to an extensive corpus or deal mainly with specific languages. \cite{berrahou2013extract} described an attempt to recognise units by looking up terms from an ontology, using ML in combination with pattern matching and string metrics. Other ML-based approaches exist, although limited to specific domains: \cite{kang_extracting_2013} and \cite{dieb2015framework} describe measurements extraction from experimental results in biology and nanocrystal device development, respectively. Our work is not restricted to a specific domain or subset of measurements and includes a normalisation process. 
 %These approaches were difficult to extend to general corpus independent of languages. Therefore, it is understandable that a high performance and generally usable tool with unit normalisation is necessary to be developed.
 
 \section{System description}
 \label{sec:system}
 Grobid-quantities is a Java web application, based on Grobid (GeneRation Of BIbliographic Data)~\cite{GROBID} \cite{lopez2009grobid}, a machine learning framework for parsing and structuring raw documents such as PDF or plain text. 
 Grobid-quantities is designed to process large quantity of data, via web, through a rest API or locally, via the file-system (batch mode). 
-Output information are standardised as stand-off annotations, they can be stored in databases or indexed in search engines. Each annotation can be visualised on PDFs using the GROBID build-in positional coordinates.
+Output information is standardised as stand-off annotations, and they can be stored in databases or indexed in search engines. Each annotation can be visualised on PDFs using the GROBID build-in positional coordinates.
 
 \subsection{Data model}
 \label{subsub:data-model}
@@ -273,7 +273,7 @@ The \textit{Units} CRF model works at character level and uses the \textit{Unit 
 \end{table}
 
 We then use the structured triples to fetch the corresponding information (system, type) from the \textit{Unit Lexicon} and attach them to the resulting object. 
-This implementation processes the symbols order from right to left. Priority modifiers, such as parenthesis, are ignored because more complex to manage and not frequent. 
+This implementation processes the unit characters using right-to-left order. Priority modifiers, such as parenthesis, are ignored because more complex to manage and not frequent. 
 
 %Let's suppose the raw text contains "10 m 3". The Quantity model identifies 10 as atomic value and "m 3" as the unit. The Unit model identifies "m" as the base and "3" as power: [(,m,3)]. This product is then reformatted as "m\^3" and looked up in the gazetteer. Since "m\^3" exists, system=SI, inflection='Cubic meters' and type=volume are attached to the unit object. 
 % Value model 
@@ -348,8 +348,8 @@ We trained and evaluated our system's models using a dataset based on 32 scienti
 The Quantities CRF model reported an f1 macro average of 80.14\% with precision and recall of 84.93\% and 76.86\%, respectively. The paragraph accuracy was 68.97\%, indicating that more than half of the evaluated paragraphs were correctly labelled. These scores are promising, considering the complexity of the task and the rather small size of the training corpus. In particular, \texttt{<list>} and \texttt{<unitRight>} require more example. 
 
 % Scores + discussion Unit CRF model 
-The Units CRF model f1 macro average was 98.86\%, with precision and recall reaching 98.75\% and 98.97\%, respectively. Compared with out other models, performances were extremely high (more than 10\% for f1 score). 
-Such difference can be attributed to (a) the data distribution and (b) the lower variability of unit expressions. We analysed the training data and we noticed that the distribution is biased toward simple units (composed by a single triple). Intuitively, this makes sense, because simple units are statistically more frequent; on the other hand it highlight the necessity of having more complex examples in our dataset. 
+The Units CRF model f1 macro average was 98.86\%, with precision and recall reaching 98.75\% and 98.97\%, respectively. Compared with our other models, performances were extremely high (more than 10\% for f1 score). 
+Such difference can be attributed to (a) the data distribution and (b) the lower variability of unit expressions. We analysed the training data, and we noticed that the distribution is biased toward simple units (composed by a single triple). Intuitively, this makes sense, because simple units are statistically more frequent; on the other hand, it highlights the necessity of having more complex examples in our dataset. 
 Secondly, unit expressions appear, by nature, with lower variability, leading to the generation of more duplicates than in other models' training datasets. For example, the expressions 1\% and 2\% have two different values (1, 2) and the same unit (\%), which would appear twice. 
 Since we cannot alter the statistical distribution of the dataset, we would obtain better and more precise measurements of the model generalisation capabilities by using a separate and independent evaluation corpus. 
 
